@@ -26,6 +26,8 @@ class Player(Basic):
         self.location[0] -= 20
     def move_right(self):
         self.location[0] += 20
+    def attack(self,moster):
+        print("attacking")
 
 class Moster(Basic):
     def __init__(self,name,location,screen):
@@ -49,29 +51,28 @@ class Relive_Warter(Basic):
 class Maps(object):
     def __init__(self,*element_list):      #传入地图中所有的元素的列表,列表的列表
         self.element_list = element_list
+
     def display(self):
         for i in self.element_list:
             for j in i:
                 j.display()
 
 #-----------glass元素对象-------------------#
-def glass_display(screen):
-    map_index = [(20*x,20*y) for x in range(20) for y in range(20)]
+def glass_all(screen,map_index):
     return [Glass(x,screen) for x in map_index]
 
 #------------tiger_moutain------------#    
-def tiger_moutain_stone(screen):
-    map_index = [(20*x,20*y) for x in range(20) for y in range(20)]
-    tiger_moutain_stone_index = [(20,20*y) for y in range(1,7)] + [(20,20*y) for y in range(8,20)] + [(20*x,160) for x in range(2,6)] + [(20*x,120) for x in range(11,15)] + [(200,20*y) for y in range(6,15)] + [(20*x,200) for x in range(13,20)]
-    return [Stone(x,screen) for x in tiger_moutain_stone_index]
+def tiger_moutain_stone(screen,stone_index):
+    return [Stone(x,screen) for x in stone_index]
 
-def tiger_moutain_relive_warter(screen):
-    pass
+def tiger_moutain_moster(screen,moster_index):
+    return [Moster("tiger_moster",x,screen) for x in moster_index]
+
 #------------------------------------------------------#
 
 
 #------汇总map中无法到达的坐标列表
-def maps_can_not_move_to(*args):
+def maps_can_not_move_element_list(*args):
     sum_can_not_move_to_element = []
     for i in args:
         sum_can_not_move_to_element +=i
@@ -109,53 +110,68 @@ def judge_can_not_move(key_down,player,element_list):
                     break
     return can_not_up_flag,can_not_down_flag,can_not_left_flag,can_not_right_flag
     
+def judge_hit(player,element_list):
+    moster_flag = 0
+    for i in element_list:
+        if player.location[0] == i.location[0] and player.location[1] == i.location[1]:
+            moster_flag =1
+            moster = i
+            break
+    if moster_flag == 1:
+        return moster
 
-def key_control(player,can_not_move_to_element_list):
+def key_control(player,stone_list,moster_list):
     for event in pygame.event.get():
         if event.type == QUIT:
             print("exit")
             exit()
         elif event.type == KEYDOWN:
             if event.key == K_w:
-                up_flag = judge_can_not_move("up",player,can_not_move_to_element_list)
-                print(up_flag)
-                if up_flag[0] == 0:
+                stone_up_flag = judge_can_not_move("up",player,stone_list)
+                if stone_up_flag[0] == 0:
                     if player.location[1] > 0:
                         print("上")
                         player.move_up()
             elif event.key == K_s:
-                down_flag = judge_can_not_move("down",player,can_not_move_to_element_list)
-                if down_flag[1] == 0:
+                stone_down_flag = judge_can_not_move("down",player,stone_list)
+                if stone_down_flag[1] == 0:
                     if player.location[1] < 380:
                         print("下")
                         player.move_down()
             elif event.key == K_a:
-                left_flag = judge_can_not_move("left",player,can_not_move_to_element_list)
-                if left_flag[2] == 0:
+                stone_left_flag = judge_can_not_move("left",player,stone_list)
+                if stone_left_flag[2] == 0:
                     if player.location[0] > 0:
                         print("左")
                         player.move_left()
             elif event.key == K_d:
-                right_flag = judge_can_not_move("right",player,can_not_move_to_element_list)
-                if right_flag[3] == 0:
+                stone_right_flag = judge_can_not_move("right",player,stone_list)
+                if stone_right_flag[3] == 0:
                     if player.location[0] < 380:
                         print("右")
                         player.move_right()
+            moster = judge_hit(player,moster_list)
+            if moster:
+                player.attack(moster)
         
 def main():
     screen = pygame.display.set_mode((400,400),0,32)
     player = Player("sam",[0,380],screen)
 
-    glass_list = glass_display(screen)
-    tiger_moutain_stone_list = tiger_moutain_stone(screen)
-    can_not_move_to_element_list = maps_can_not_move_to(tiger_moutain_stone_list)
-    tiger_moutain = Maps(glass_list,tiger_moutain_stone_list)
+    map_index = [(20*x,20*y) for x in range(20) for y in range(20)]
+    tiger_moutain_stone_index = [(20,20*y) for y in range(1,7)] + [(20,20*y) for y in range(8,20)] + [(20*x,160) for x in range(2,6)] + [(20*x,120) for x in range(11,15)] + [(200,20*y) for y in range(6,15)] + [(20*x,200) for x in range(13,20)]
+    tiger_moutain_moster_index = [(160,140),(240,300)]
 
-    
+    glass_list = glass_all(screen,map_index)
+    tiger_moutain_stone_list = tiger_moutain_stone(screen,tiger_moutain_stone_index)
+    tiger_moutain_moster_list = tiger_moutain_moster(screen,tiger_moutain_moster_index)
+    #tiger_moutain_can_not_move_element_list = maps_can_not_move_element_list(tiger_moutain_stone_list)
+    tiger_moutain = Maps(glass_list,tiger_moutain_stone_list,tiger_moutain_moster_list)
+
     while True:
         tiger_moutain.display()
         player.display()
-        key_control(player,can_not_move_to_element_list)
+        key_control(player,tiger_moutain_stone_list,tiger_moutain_moster_list)
         pygame.display.update()
         time.sleep(0.01)
 
