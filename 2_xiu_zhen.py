@@ -25,8 +25,10 @@ class AttackBasic(Basic):
 
 
 class Player(AttackBasic):
-    def __init__(self,name,at,hp,location,screen):
+    def __init__(self,name,location,screen,at=5,hp=100,experience=0,level=1):
         super().__init__(name,at,hp,location,screen,pygame.image.load("./resource/player.png"))
+        self.experience = experience
+        self.level = level
     def move_up(self):
         self.location[1] -= 20
     def move_down(self):
@@ -69,19 +71,23 @@ class Relive_Warter(Basic):
 
 
 class Maps(object):
-    def __init__(self,*element_list):      #传入地图中所有的元素的列表
+    def __init__(self,*element_list):      #传入地图中元素的所有列表
         self.element_list = element_list
 
     def display(self):
         for i in self.element_list:
             for j in i:
-                j.display()
+                if isinstance(j,Moster):
+                    if j.hp > 0:
+                        j.display()
+                else:
+                    j.display()
 
 #-----------glass元素对象-------------------#
 def glass_all(screen,map_index):
     return [Glass(x,screen) for x in map_index]
 
-#------------tiger_moutain------------#    
+#------------生成小元素对象------------#    
 def map_stone(screen,stone_index):
     return [Stone(x,screen) for x in stone_index]
 
@@ -140,6 +146,22 @@ def judge_hit(player,moster_list):
     if moster_flag == 1:
         return moster
 
+def attacking(player,moster):
+    while True:
+        print(moster.hp)
+        print(player.hp)
+        if moster.hp <= 0:
+            print("you kill a %s"%moster.name)
+            player.experience += 20
+            if player.experience // player.level ==120:
+                player.level +=1
+            player.hp = 100
+            break
+        if player.hp <= 0:
+            print("you are kill by %s"%moster.name)
+            break
+        player.attack(moster)
+        moster.attack(player)
 def key_control(player,stone_list,moster_list):
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -172,11 +194,11 @@ def key_control(player,stone_list,moster_list):
                         player.move_right()
             moster = judge_hit(player,moster_list)
             if moster:
-                player.attack(moster)
+                attacking(player,moster)
         
 def main():
     screen = pygame.display.set_mode((400,400),0,32)
-    player = Player("sam",5,100,[0,380],screen)
+    player = Player("sam",[0,380],screen)
 
     map_index = [(20*x,20*y) for x in range(20) for y in range(20)]
     tiger_moutain_stone_index = [(20,20*y) for y in range(1,7)] + [(20,20*y) for y in range(8,20)] + [(20*x,160) for x in range(2,6)] + [(20*x,120) for x in range(11,15)] + [(200,20*y) for y in range(6,15)] + [(20*x,200) for x in range(13,20)]
