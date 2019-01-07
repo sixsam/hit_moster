@@ -36,6 +36,7 @@ class Player(AttackBasic):
         self.right_flag = 0
         self.attack_flag = 0
         self.jump_flag = 0
+        self.attack_moster = None
 
     def move_up(self):
         self.location[1] -= 20
@@ -67,10 +68,12 @@ class Player(AttackBasic):
             self.attack_flag = 0
             if self.location[0] == element.location[0] and self.location[1] == element.location[1]:
                 self.attack_flag = 1
+                self.attack_moster = element
         elif isinstance(element,Jump_to_map):
             self.jump_flag = 0
             if self.location[0] == element.location[0] and self.location[1] == element.location[1]:
                 self.jump_flag = 1
+                self.map_name = element.name
 
 class Moster(AttackBasic):
     def __init__(self,name,at,hp,location,screen):
@@ -105,15 +108,16 @@ class Relive_Warter(Basic):
 
 class Jump_to_map(Basic):
     def __init__(self,location,screen,image):
-        super().__init__(location,screen,image))
+        super().__init__(location,screen,image)
 
 class Exit_map(Jump_to_map):
     def __init__(self,location,screen):
         super().__init__(location,screen,pygame.image.load("./resource/exit.png"))
 
 class Dead_space_map(Jump_to_map):
-    def __init__(self,location,screen):
+    def __init__(self,name,location,screen):
         super().__init__(location,screen,pygame.image.load("./resource/dead_place.png"))
+        self.name = name
 
 
 
@@ -146,7 +150,7 @@ def map_exit(screen,exit_index):
     return [Exit_map(x,screen) for x in exit_index]
 
 def map_dead_space(screen,exit_index):
-    return [Dead_space_map(x,screen) for x in exit_index]
+    return [Dead_space_map("tiger_moutain",x,screen) for x in exit_index]
 
 
 
@@ -161,7 +165,7 @@ def sum_maps_element_list(*args):
     return sum_class_element
 
 
-def judge_can_not_move(key_down,player,element_list):
+'''def judge_can_not_move(key_down,player,element_list):
     can_not_up_flag = 0
     can_not_down_flag = 0
     can_not_left_flag = 0
@@ -200,11 +204,11 @@ def judge_hit(player,moster_list):
             moster = i
             break
     if moster_flag == 1:
-        return moster
+        return moster'''
 
 def judge_with_elements(player,element_list):
     for i in element_list:
-        player.judge_with_element()
+        player.judge_with_element(i)
 
 def attacking(player,moster):
     while True:
@@ -223,38 +227,34 @@ def attacking(player,moster):
         player.attack(moster)
         moster.attack(player)
 def key_control(player,map_element_list):
+    judge_with_elements(player,map_element_list)
     for event in pygame.event.get():
         if event.type == QUIT:
             print("exit")
             exit()
         elif event.type == KEYDOWN:
             if event.key == K_w:
-                stone_up_flag = judge_can_not_move("up",player,map_element_list)
-                if stone_up_flag[0] == 0:
+                if player.up_flag == 0:
                     if player.location[1] > 0:
                         print("上")
                         player.move_up()
             elif event.key == K_s:
-                stone_down_flag = judge_can_not_move("down",player,map_element_list)
-                if stone_down_flag[1] == 0:
+                if player.down_flag == 0:
                     if player.location[1] < 380:
                         print("下")
                         player.move_down()
             elif event.key == K_a:
-                stone_left_flag = judge_can_not_move("left",player,element_list)
-                if stone_left_flag[2] == 0:
+                if player.left_flag == 0:
                     if player.location[0] > 0:
                         print("左")
                         player.move_left()
             elif event.key == K_d:
-                stone_right_flag = judge_can_not_move("right",player,element_list)
-                if stone_right_flag[3] == 0:
+                if player.right_flag == 0:
                     if player.location[0] < 380:
                         print("右")
                         player.move_right()
-            moster = judge_hit(player,moster_list)
-            if moster:
-                attacking(player,moster)
+    if player.attack_flag == 1:
+        attacking(player,player.attack_moster)
         
 def main():
     screen = pygame.display.set_mode((400,400),0,32)
@@ -263,6 +263,7 @@ def main():
     map_index = [(20*x,20*y) for x in range(20) for y in range(20)]
     glass_list = glass_all(screen,map_index)
 
+    #town----------------------------------
     town_stone_index = [(0,20*y) for y in [1,2,4,5,7,8]]
     town_moster_index = []
     town_dead_space_index = [(0,0)]
@@ -270,7 +271,7 @@ def main():
     town_stone_list = map_stone(screen,town_stone_index)
     town_moster_list = map_moster("none",5,20,screen,town_moster_index)
     town_dead_space_list = map_dead_space(screen,town_dead_space_index)
-    town_element_list = sum_maps_element_list(town_stone_lsit,town_moster_list,town_dead_space_list)
+    town_element_list = sum_maps_element_list(town_stone_list,town_moster_list,town_dead_space_list)
 
 
     #tiger_moutain----------------------------------
@@ -278,25 +279,24 @@ def main():
     tiger_moutain_tiger_moster_index = [(160,140),(240,300)]
     tiger_moutain_snake_moster_index = [(240,80),(60,340)]
     tiger_moutain_exit_index = [(0,380)]
-    #tiger_moutain----------------------------------
+
     tiger_moutain_stone_list = map_stone(screen,tiger_moutain_stone_index)
     tiger_moutain_tiger_moster_list = map_moster("tiger_moster",5,20,screen,tiger_moutain_tiger_moster_index)
     tiger_moutain_snake_moster_list = map_moster("snake_moster",5,20,screen,tiger_moutain_snake_moster_index)
     tiger_moutain_exit_list = map_exit(screen,tiger_moutain_exit_index)
     tiger_moutain_element_list = sum_maps_element_list(tiger_moutain_stone_list,tiger_moutain_tiger_moster_list,tiger_moutain_snake_moster_list,tiger_moutain_exit_list)
-    #tiger_moutain----------------------------------
 
     while True:
         if player.map_name == "town":
             current_map = Maps("town",glass_list,town_stone_list,town_dead_space_list)
-        elif pleyer.map_name == "tiger_moutain":
-            current_map = Maps("tiger_moutain",glass_list,tiger_moutain_stone_list,tiger_moutain_moster_element_list,tiger_moutain_exit_list)
+        elif player.map_name == "tiger_moutain":
+            current_map = Maps("tiger_moutain",glass_list,tiger_moutain_stone_list,tiger_moutain_tiger_moster_list,tiger_moutain_snake_moster_list,tiger_moutain_exit_list)
         current_map.display()
         player.display()
         if player.map_name == "town":
-            key_control(player,town_stone_list,town_moster_list)
+            key_control(player,town_element_list)
         if player.map_name == "tiger_moutain":
-            key_control(player,tiger_moutain_stone_list,tiger_moutain_moster_element_list)
+            key_control(player,tiger_moutain_element_list)
         pygame.display.update()
         time.sleep(0.01)
 
