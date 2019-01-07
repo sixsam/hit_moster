@@ -107,17 +107,17 @@ class Relive_Warter(Basic):
 
 
 class Jump_to_map(Basic):
-    def __init__(self,location,screen,image):
+    def __init__(self,name,location,screen,image):
         super().__init__(location,screen,image)
+        self.name = name
 
 class Exit_map(Jump_to_map):
-    def __init__(self,location,screen):
-        super().__init__(location,screen,pygame.image.load("./resource/exit.png"))
+    def __init__(self,name,location,screen):
+        super().__init__(name,location,screen,pygame.image.load("./resource/exit.png"))
 
 class Dead_space_map(Jump_to_map):
     def __init__(self,name,location,screen):
-        super().__init__(location,screen,pygame.image.load("./resource/dead_place.png"))
-        self.name = name
+        super().__init__(name,location,screen,pygame.image.load("./resource/dead_place.png"))
 
 
 
@@ -147,7 +147,7 @@ def map_moster(name,at,hp,screen,moster_index):
     return [Moster(name,at,hp,x,screen) for x in moster_index]
 
 def map_exit(screen,exit_index):
-    return [Exit_map(x,screen) for x in exit_index]
+    return [Exit_map("town",x,screen) for x in exit_index]
 
 def map_dead_space(screen,exit_index):
     return [Dead_space_map("tiger_moutain",x,screen) for x in exit_index]
