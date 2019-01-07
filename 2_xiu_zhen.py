@@ -9,15 +9,24 @@ class Basic(object):
         self.location = location
         self.screen = screen
         self.element = element
-
     def display(self):
         self.screen.blit(self.element,(self.location[0],self.location[1]))
 
-class Player(Basic):
-    def __init__(self,name,location,screen):
-        super().__init__(location,screen,pygame.image.load("./resource/player.png"))
-        self.name = name
 
+class AttackBasic(Basic):
+    def __init__(self,name,at,hp,location,screen,image):
+        super().__init__(location,screen,image)
+        self.name = name
+        self.at = at
+        self.hp = hp
+    def attack(self,item):
+        item.hp -= self.at
+        print("%s attack %s ,%s lose %d blood."%(self.name,item.name,item.name,self.at))
+
+
+class Player(AttackBasic):
+    def __init__(self,name,at,hp,location,screen):
+        super().__init__(name,at,hp,location,screen,pygame.image.load("./resource/player.png"))
     def move_up(self):
         self.location[1] -= 20
     def move_down(self):
@@ -26,13 +35,24 @@ class Player(Basic):
         self.location[0] -= 20
     def move_right(self):
         self.location[0] += 20
-    def attack(self,moster):
-        print("attacking")
 
-class Moster(Basic):
-    def __init__(self,name,location,screen):
-        super().__init__(location,screen,pygame.image.load("./resource/moster.png"))
-        self.name = name
+
+class Moster(AttackBasic):
+    def __init__(self,name,at,hp,location,screen):
+        super().__init__(name,at,hp,location,screen,pygame.image.load("./resource/moster.png"))
+
+class Tiger_moster(Moster):
+    def __init__(self,at,hp,location,screen):
+        super().__init__(at,hp,location,screen,name="tiger_moster")
+
+class Snake_moster(Moster):
+    def __init__(self,at,hp,location,screen):
+        super().__init__(at,hp,location,screen,name="snake_moster")
+
+class Fox_moster(Moster):
+    def __init__(self,at,hp,location,screen):
+        super().__init__(at,hp,location,screen,name="fox_moster")
+
 
 class Stone(Basic):
     def __init__(self,location,screen):
@@ -49,7 +69,7 @@ class Relive_Warter(Basic):
 
 
 class Maps(object):
-    def __init__(self,*element_list):      #传入地图中所有的元素的列表,列表的列表
+    def __init__(self,*element_list):      #传入地图中所有的元素的列表
         self.element_list = element_list
 
     def display(self):
@@ -62,21 +82,21 @@ def glass_all(screen,map_index):
     return [Glass(x,screen) for x in map_index]
 
 #------------tiger_moutain------------#    
-def tiger_moutain_stone(screen,stone_index):
+def map_stone(screen,stone_index):
     return [Stone(x,screen) for x in stone_index]
 
-def tiger_moutain_moster(screen,moster_index):
-    return [Moster("tiger_moster",x,screen) for x in moster_index]
+def map_moster(name,at,hp,screen,moster_index):
+    return [Moster(name,at,hp,x,screen) for x in moster_index]
 
 #------------------------------------------------------#
 
 
-#------汇总map中无法到达的坐标列表
-def maps_can_not_move_element_list(*args):
-    sum_can_not_move_to_element = []
+#------汇总map中同类对象
+def sum_class_element_list(*args):
+    sum_class_element = []
     for i in args:
-        sum_can_not_move_to_element +=i
-    return sum_can_not_move_to_element
+        sum_class_element +=i
+    return sum_class_element
 
 
 def judge_can_not_move(key_down,player,element_list):
@@ -110,9 +130,9 @@ def judge_can_not_move(key_down,player,element_list):
                     break
     return can_not_up_flag,can_not_down_flag,can_not_left_flag,can_not_right_flag
     
-def judge_hit(player,element_list):
+def judge_hit(player,moster_list):
     moster_flag = 0
-    for i in element_list:
+    for i in moster_list:
         if player.location[0] == i.location[0] and player.location[1] == i.location[1]:
             moster_flag =1
             moster = i
@@ -156,22 +176,24 @@ def key_control(player,stone_list,moster_list):
         
 def main():
     screen = pygame.display.set_mode((400,400),0,32)
-    player = Player("sam",[0,380],screen)
+    player = Player("sam",5,100,[0,380],screen)
 
     map_index = [(20*x,20*y) for x in range(20) for y in range(20)]
     tiger_moutain_stone_index = [(20,20*y) for y in range(1,7)] + [(20,20*y) for y in range(8,20)] + [(20*x,160) for x in range(2,6)] + [(20*x,120) for x in range(11,15)] + [(200,20*y) for y in range(6,15)] + [(20*x,200) for x in range(13,20)]
-    tiger_moutain_moster_index = [(160,140),(240,300)]
+    tiger_moutain_tiger_moster_index = [(160,140),(240,300)]
+    tiger_moutain_snake_moster_index = [(240,80),(60,340)]
 
     glass_list = glass_all(screen,map_index)
-    tiger_moutain_stone_list = tiger_moutain_stone(screen,tiger_moutain_stone_index)
-    tiger_moutain_moster_list = tiger_moutain_moster(screen,tiger_moutain_moster_index)
-    #tiger_moutain_can_not_move_element_list = maps_can_not_move_element_list(tiger_moutain_stone_list)
-    tiger_moutain = Maps(glass_list,tiger_moutain_stone_list,tiger_moutain_moster_list)
+    tiger_moutain_stone_list = map_stone(screen,tiger_moutain_stone_index)
+    tiger_moutain_tiger_moster_list = map_moster("tiger_moster",5,20,screen,tiger_moutain_tiger_moster_index)
+    tiger_moutain_snake_moster_list = map_moster("snake_moster",5,20,screen,tiger_moutain_snake_moster_index)
+    tiger_moutain_moster_element_list = sum_class_element_list(tiger_moutain_tiger_moster_list,tiger_moutain_snake_moster_list)
+    tiger_moutain = Maps(glass_list,tiger_moutain_stone_list,tiger_moutain_moster_element_list)
 
     while True:
         tiger_moutain.display()
         player.display()
-        key_control(player,tiger_moutain_stone_list,tiger_moutain_moster_list)
+        key_control(player,tiger_moutain_stone_list,tiger_moutain_moster_element_list)
         pygame.display.update()
         time.sleep(0.01)
 
