@@ -36,7 +36,6 @@ class Player(AttackBasic):
         self.right_flag = 0
         self.attack_flag = 0
         self.jump_flag = 0
-        self.attack_moster = None
 
     def move_up(self):
         self.location[1] -= 20
@@ -46,34 +45,31 @@ class Player(AttackBasic):
         self.location[0] -= 20
     def move_right(self):
         self.location[0] += 20
-    def judge_with_element(self,element):
-        if isinstance(element,Stone):
-            self.up_flag = 0
-            self.down_flag = 0
-            self.left_flag = 0
-            self.right_flag = 0
-            if self.location[0] == element.location[0]:
-                if(self.location[1] - 20) == element.location[1]:
-                    self.up_flag = 1
-            if self.location[0] == element.location[0]:
-                if(self.location[1] + 20) == element.location[1]:
-                    self.down_flag = 1
-            if self.location[1] == element.location[1]:
-                if(self.location[0] - 20) == element.location[0]:
-                    self.left_flag = 1
-            if self.location[0] == element.location[0]:
-                if(self.location[1] + 20) == element.location[1]:
-                    self.right_flag = 1
-        elif isinstance(element,Moster):
-            self.attack_flag = 0
-            if self.location[0] == element.location[0] and self.location[1] == element.location[1]:
-                self.attack_flag = 1
-                self.attack_moster = element
-        elif isinstance(element,Jump_to_map):
-            self.jump_flag = 0
-            if self.location[0] == element.location[0] and self.location[1] == element.location[1]:
-                self.jump_flag = 1
-                self.map_name = element.name
+    def judge_with_stone(self,element):
+        self.up_flag = 0
+        self.down_flag = 0
+        self.left_flag = 0
+        self.right_flag = 0
+        if self.location[0] == element.location[0]:
+            if(self.location[1] - 20) == element.location[1]:
+                self.up_flag = 1
+        if self.location[0] == element.location[0]:
+            if(self.location[1] + 20) == element.location[1]:
+                self.down_flag = 1
+        if self.location[1] == element.location[1]:
+            if(self.location[0] - 20) == element.location[0]:
+                self.left_flag = 1
+        if self.location[1] == element.location[1]:
+            if(self.location[0] + 20) == element.location[0]:
+                self.right_flag = 1
+    def judge_with_moster(self,element):
+        self.attack_flag = 0
+        if self.location[0] == element.location[0] and self.location[1] == element.location[1]:
+            self.attack_flag = 1
+    def judge_with_jump_to_map(self,element):
+        self.jump_flag = 0
+        if self.location[0] == element.location[0] and self.location[1] == element.location[1]:
+            self.jump_flag = 1
 
 class Moster(AttackBasic):
     def __init__(self,name,at,hp,location,screen):
@@ -164,51 +160,38 @@ def sum_maps_element_list(*args):
         sum_class_element +=i
     return sum_class_element
 
-
-'''def judge_can_not_move(key_down,player,element_list):
-    can_not_up_flag = 0
-    can_not_down_flag = 0
-    can_not_left_flag = 0
-    can_not_right_flag = 0
-    if key_down == "up":
-        for i in element_list:
-            if player.location[0] == i.location[0]:
-                if (player.location[1]-20) == i.location[1]:
-                    can_not_up_flag = 1
-                    break
-    if key_down == "down":
-        for i in element_list:
-            if player.location[0] == i.location[0]:
-                if (player.location[1]+20) == i.location[1]:
-                    can_not_down_flag = 1
-                    break
-    if key_down == "left":
-        for i in element_list:
-            if player.location[1] == i.location[1]:
-                if (player.location[0]-20) == i.location[0]:
-                    can_not_left_flag = 1
-                    break
-    if key_down == "right":
-        for i in element_list:
-            if player.location[1] == i.location[1]:
-                if (player.location[0]+20) == i.location[0]:
-                    can_not_right_flag = 1
-                    break
-    return can_not_up_flag,can_not_down_flag,can_not_left_flag,can_not_right_flag
-    
-def judge_hit(player,moster_list):
-    moster_flag = 0
-    for i in moster_list:
-        if player.location[0] == i.location[0] and player.location[1] == i.location[1]:
-            moster_flag =1
-            moster = i
-            break
-    if moster_flag == 1:
-        return moster'''
-
 def judge_with_elements(player,element_list):
+    up_flag = 0
+    down_flag = 0
+    left_flag = 0
+    right_flag = 0
+    attack_flag = 0
+    jump_flag = 0
+    attack_moster = None
+    jump_map = None
     for i in element_list:
-        player.judge_with_element(i)
+        if isinstance(i,Stone):
+            player.judge_with_stone(i)
+            if player.up_flag == 1:
+                up_flag = 1
+            if player.down_flag == 1:
+                down_flag = 1
+            if player.left_flag == 1:
+                left_flag = 1
+            if player.right_flag == 1:
+                right_flag = 1
+        elif isinstance(i,Moster):
+            player.judge_with_moster(i)
+            if player.attack_flag == 1:
+                attack_flag = 1
+                attack_moster = i
+        elif isinstance(i,Jump_to_map):
+            player.judge_with_jump_to_map(i)
+            if player.jump_flag == 1:
+                jump_flag = 1
+                jump_map = i.name
+    return (up_flag,down_flag,left_flag,right_flag),(attack_flag,attack_moster),(jump_flag,jump_map)
+
 
 def attacking(player,moster):
     while True:
@@ -226,36 +209,44 @@ def attacking(player,moster):
             break
         player.attack(moster)
         moster.attack(player)
-def key_control(player,map_element_list):
-    judge_with_elements(player,map_element_list)
+
+def attack_moster(player,flags):
+    if flags[0] == 1:
+        attacking(player,flags[1])
+
+def key_control(player,map_element_list,flags):
     for event in pygame.event.get():
         if event.type == QUIT:
             print("exit")
             exit()
         elif event.type == KEYDOWN:
             if event.key == K_w:
-                if player.up_flag == 0:
+                if flags[0] == 0:
                     if player.location[1] > 0:
-                        print("上")
                         player.move_up()
             elif event.key == K_s:
-                if player.down_flag == 0:
+                if flags[1] == 0:
                     if player.location[1] < 380:
-                        print("下")
                         player.move_down()
             elif event.key == K_a:
-                if player.left_flag == 0:
+                if flags[2] == 0:
                     if player.location[0] > 0:
-                        print("左")
                         player.move_left()
             elif event.key == K_d:
-                if player.right_flag == 0:
+                if flags[3] == 0:
                     if player.location[0] < 380:
-                        print("右")
                         player.move_right()
-    if player.attack_flag == 1:
-        attacking(player,player.attack_moster)
-        
+
+def jump_map(player,flags):
+    if flags[0] == 1:
+        player.map_name = flags[1]
+
+def next_step(player,element_list):
+    flags = judge_with_elements(player,element_list)
+    key_control(player,element_list,flags[0])
+    attack_moster(player,flags[1])
+    jump_map(player,flags[2])
+
 def main():
     screen = pygame.display.set_mode((400,400),0,32)
     player = Player("sam","town",[0,380],screen)
@@ -294,9 +285,9 @@ def main():
         current_map.display()
         player.display()
         if player.map_name == "town":
-            key_control(player,town_element_list)
+            next_step(player,town_element_list)
         if player.map_name == "tiger_moutain":
-            key_control(player,tiger_moutain_element_list)
+            next_step(player,tiger_moutain_element_list)
         pygame.display.update()
         time.sleep(0.01)
 
