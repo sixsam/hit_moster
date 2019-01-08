@@ -194,21 +194,22 @@ def judge_with_elements(player,element_list):
 
 
 def attacking(player,moster):
-    while True:
-        print(moster.hp)
-        print(player.hp)
-        if moster.hp <= 0:
-            print("you kill a %s"%moster.name)
-            player.experience += 20
-            if player.experience // player.level ==120:
-                player.level +=1
-            player.hp = 100
-            break
-        if player.hp <= 0:
-            print("you are kill by %s"%moster.name)
-            break
-        player.attack(moster)
-        moster.attack(player)
+    if moster.hp:
+        while True:
+            print(moster.hp)
+            print(player.hp)
+            if moster.hp <= 0:
+                print("you kill a %s"%moster.name)
+                player.experience += 20
+                if player.experience // player.level ==120:
+                    player.level +=1
+                player.hp = 100
+                break
+            if player.hp <= 0:
+                print("you are kill by %s"%moster.name)
+                break
+            player.attack(moster)
+            moster.attack(player)
 
 def attack_moster(player,flags):
     if flags[0] == 1:
